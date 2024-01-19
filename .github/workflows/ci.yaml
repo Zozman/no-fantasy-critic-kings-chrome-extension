@@ -16,27 +16,21 @@ jobs:
         with:
           sparse-checkout: src
 
-      - name: Get Previous Version
-        id: previousTag
-        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
         with:
-          fallback: 1.0.0
-
-      - name: Get Next Version
-        id: semvers
-        uses: "WyriHaximus/github-action-next-semvers@v1"
-        with:
-          version: ${{ steps.previousTag.outputs.tag }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update manifest.json version
         uses: jossef/action-set-json-field@v2.1
         with:
           file: src/manifest.json
           field: version
-          value: ${{ steps.semvers.outputs.patch }}
+          value: ${{ steps.tag_version.outputs.new_version }}
 
       - name: Create Chromium Release Zip
-        run: zip -r ${{ github.event.repository.name }}-v${{ steps.semvers.outputs.patch }}-chromium.zip src
+        run: zip -r ${{ github.event.repository.name }}-v${{ steps.tag_version.outputs.new_version }}-chromium.zip src
 
       - name: Create FireFox xpi
         id: web-ext-build
@@ -44,12 +38,12 @@ jobs:
         with:
           cmd: build
           source: src
-          filename: ${{ github.event.repository.name }}-v${{ steps.semvers.outputs.patch }}-firefox.xpi
+          filename: ${{ github.event.repository.name }}-v${{ steps.tag_version.outputs.new_version }}-firefox.xpi
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.semvers.outputs.patch }}
+          tag_name: ${{ steps.tag_version.outputs.new_version }}
           files: |
-            ${{ github.event.repository.name }}-v${{ steps.semvers.outputs.patch }}.zip
-            ${{ github.event.repository.name }}-v${{ steps.semvers.outputs.patch }}-firefox.xpi
+            ${{ github.event.repository.name }}-v${{ steps.tag_version.outputs.new_version }}-chromium.zip
+            ${{ github.event.repository.name }}-v${{ steps.tag_version.outputs.new_version }}-firefox.xpi
