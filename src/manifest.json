@@ -16,5 +16,10 @@
           "https://www.fantasycritic.games/league/*"
         ]
       }
-    ]
+    ],
+    "browser_specific_settings": {
+      "gecko": {
+        "id": "no-fantasy-critic-kings-extension"
+      }
+    }
   }
