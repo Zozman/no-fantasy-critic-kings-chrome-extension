@@ -35,11 +35,21 @@ jobs:
           field: version
           value: ${{ steps.semvers.outputs.patch }}
 
-      - name: Create Release Zip
-        run: zip -r -q ${{ github.event.repository.name }}-v${{ steps.semvers.outputs.patch }}.zip src
+      - name: Create Chromium Release Zip
+        run: zip -r ${{ github.event.repository.name }}-v${{ steps.semvers.outputs.patch }}-chromium.zip src
+
+      - name: Create FireFox xpi
+        id: web-ext-build
+        uses: kewisch/action-web-ext@v1
+        with:
+          cmd: build
+          source: src
+          filename: ${{ github.event.repository.name }}-v${{ steps.semvers.outputs.patch }}-firefox.xpi
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.semvers.outputs.patch }}
-          files: ${{ github.event.repository.name }}-v${{ steps.semvers.outputs.patch }}.zip
+          files: |
+            ${{ github.event.repository.name }}-v${{ steps.semvers.outputs.patch }}.zip
+            ${{ github.event.repository.name }}-v${{ steps.semvers.outputs.patch }}-firefox.xpi
