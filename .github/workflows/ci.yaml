@@ -1,0 +1,45 @@
+name: ci
+
+on:
+  push:
+    # Publish `master` as Docker `latest` image.
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+        name: Checkout src files
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: src
+
+      - name: Get Previous Version
+        id: previousTag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+        with:
+          fallback: 1.0.0
+
+      - name: Get Next Version
+        id: semvers
+        uses: "WyriHaximus/github-action-next-semvers@v1"
+        with:
+          version: ${{ steps.previousTag.outputs.tag }}
+
+      - name: Update manifest.json version
+        uses: jossef/action-set-json-field@v2.1
+        with:
+          file: src/manifest.json
+          field: version
+          value: ${{ steps.semvers.outputs.patch }}
+
+      - name: Create Release Zip
+        run: zip -r -q ${{ github.event.repository.name }}-v${{ steps.semvers.outputs.patch }}.zip src
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.semvers.outputs.patch }}
+          files: ${{ github.event.repository.name }}-v${{ steps.semvers.outputs.patch }}.zip
